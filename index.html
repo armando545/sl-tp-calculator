@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Calculadora SL / TP — CFDs</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0F1117;color:#E2E8F0;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+.app{max-width:960px;margin:0 auto;padding:24px 16px 48px}
+.header{text-align:center;margin-bottom:28px}
+.header h1{font-size:22px;font-weight:600;letter-spacing:3px;color:#A78BFA}
+.header p{font-size:12px;color:#475569;margin-top:5px;letter-spacing:1px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:660px){.grid{grid-template-columns:1fr}}
+.card{background:#1A1D2E;border:1px solid #2D3154;border-radius:14px;padding:20px;margin-bottom:14px}
+.section-title{font-size:10px;font-weight:600;letter-spacing:2px;color:#6366F1;text-transform:uppercase;margin-bottom:16px}
+.field{margin-bottom:14px}
+.field label{display:flex;align-items:center;gap:6px;font-size:12px;color:#94A3B8;margin-bottom:6px;font-weight:500}
+input[type=text],input[type=number],select{width:100%;background:#0D0F1A;border:1px solid #2D3154;border-radius:8px;padding:9px 12px;color:#E2E8F0;font-size:13px;outline:none;transition:border-color .2s}
+input:focus,select:focus{border-color:#6366F1}
+input.err{border-color:#EF4444}
+.err-msg{font-size:10px;color:#EF4444;margin-top:3px;display:none}
+select option{background:#1A1D2E}
+.dir-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dir-btn{padding:9px;border-radius:8px;border:1px solid #2D3154;background:#0D0F1A;color:#475569;font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:all .2s;letter-spacing:1px}
+.dir-long{background:#052e16!important;border-color:#22C55E!important;color:#22C55E!important}
+.dir-short{background:#2d0c0c!important;border-color:#EF4444!important;color:#EF4444!important}
+.slider-row{display:flex;align-items:center;gap:10px}
+.slider-row input[type=range]{flex:1;accent-color:#6366F1;cursor:pointer}
+.slider-lbl{font-size:11px;color:#475569;min-width:28px}
+.rr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.rr-btn{padding:8px 4px;border-radius:8px;border:1px solid #2D3154;background:#0D0F1A;color:#475569;font-size:12px;font-weight:500;cursor:pointer;text-align:center;transition:all .2s}
+.rr-active{background:#1e1b4b!important;border-color:#6366F1!important;color:#A78BFA!important}
+.result-card{background:#1A1D2E;border:1px solid #2D3154;border-radius:14px;padding:20px;position:sticky;top:16px}
+.res-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #1e2240}
+.res-label{font-size:12px;color:#64748B;display:flex;align-items:center;gap:7px}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block}
+.res-val{font-size:15px;font-weight:600;color:#334155}
+.c-white{color:#E2E8F0!important}
+.c-red{color:#EF4444!important}
+.c-green{color:#22C55E!important}
+.c-amber{color:#F59E0B!important}
+.c-purple{color:#A78BFA!important}
+.lot-section-title{font-size:10px;font-weight:600;letter-spacing:1.5px;color:#6366F1;text-transform:uppercase;margin:14px 0 6px}
+.lot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.lot-box{background:#0D0F1A;border:1px solid #2D3154;border-radius:8px;padding:8px;text-align:center}
+.lot-lbl{font-size:9px;color:#475569;margin-bottom:3px;letter-spacing:.5px}
+.lot-val{font-size:13px;font-weight:600;color:#818CF8}
+.summary-box{background:#0D0F1A;border:1px solid #2D3154;border-radius:8px;padding:12px;margin:14px 0;font-size:11px;color:#64748B;line-height:1.9;font-family:monospace;white-space:pre-wrap;display:none}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.btn{padding:10px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid;transition:all .2s;letter-spacing:.5px}
+.btn-copy{background:#1e1b4b;border-color:#6366F1;color:#818CF8}
+.btn-reset{background:#2d0c0c;border-color:#EF4444;color:#EF4444}
+.tooltip-wrap{position:relative;display:inline-flex;align-items:center}
+.tip-icon{width:14px;height:14px;border-radius:50%;background:#1e2240;border:1px solid #4A5180;color:#6366F1;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:default;flex-shrink:0}
+.tooltip{display:none;position:absolute;bottom:20px;left:0;background:#1e2240;border:1px solid #4A5180;border-radius:8px;padding:8px 10px;font-size:11px;color:#CBD5E1;width:210px;z-index:99;line-height:1.6}
+.tooltip-wrap:hover .tooltip{display:block}
+.custom-rr-wrap{display:none;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>CALCULADORA SL / TP</h1>
+    <p>CFDs &middot; GESTIÓN DE RIESGO PROFESIONAL</p>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <div class="section-title">Datos del Activo</div>
+        <div class="field">
+          <label>Tipo de activo</label>
+          <select id="assetType" onchange="calc()">
+            <option value="forex">Forex</option>
+            <option value="indices">Índices</option>
+            <option value="stocks">Acciones</option>
+            <option value="crypto">Criptomonedas</option>
+            <option value="commodities">Commodities</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Símbolo / Par</label>
+          <input type="text" id="symbol" placeholder="ej. EURUSD, NAS100, XAUUSD" oninput="calc()" />
+        </div>
+        <div class="field">
+          <label>Precio de entrada</label>
+          <input type="number" id="entryPrice" placeholder="0.00000" step="0.00001" oninput="calc()" />
+          <div class="err-msg" id="err-entry">Ingresa un precio válido</div>
+        </div>
+        <div class="field">
+          <label>Dirección del trade</label>
+          <div class="dir-toggle">
+            <div class="dir-btn dir-long" id="btn-long" onclick="setDir('long')">&#9650; LONG</div>
+            <div class="dir-btn" id="btn-short" onclick="setDir('short')">&#9660; SHORT</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>ATR actual
+            <span class="tooltip-wrap">
+              <span class="tip-icon">?</span>
+              <span class="tooltip">Average True Range: mide la volatilidad del activo. Búscalo en tu plataforma con el indicador ATR (período 14 recomendado).</span>
+            </span>
+          </label>
+          <input type="number" id="atr" placeholder="0.0000" step="0.0001" oninput="calc()" />
+          <div class="err-msg" id="err-atr">Ingresa el ATR del activo</div>
+        </div>
+        <div class="field">
+          <label>Multiplicador ATR: <span id="atrMultLbl" style="color:#A78BFA;margin-left:4px">1.5x</span>
+            <span class="tooltip-wrap">
+              <span class="tip-icon">?</span>
+              <span class="tooltip">Cuántas veces el ATR usas como distancia del Stop Loss. Más alto = stop más amplio.</span>
+            </span>
+          </label>
+          <div class="slider-row">
+            <span class="slider-lbl">0.5x</span>
+            <input type="range" id="atrMult" min="0.5" max="3" step="0.1" value="1.5" oninput="document.getElementById('atrMultLbl').textContent=parseFloat(this.value).toFixed(1)+'x';calc()" />
+            <span class="slider-lbl">3x</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Gestión de Riesgo</div>
+        <div class="field">
+          <label>Equity de la cuenta (USD)</label>
+          <input type="number" id="equity" placeholder="10000" step="100" oninput="calc()" />
+        </div>
+        <div class="field">
+          <label>% riesgo por operación: <span id="riskPctLbl" style="color:#A78BFA;margin-left:4px">1.0%</span>
+            <span class="tooltip-wrap">
+              <span class="tip-icon">?</span>
+              <span class="tooltip">Porcentaje del equity que arriesgas en este trade. Se recomienda entre 0.5% y 2% por operación.</span>
+            </span>
+          </label>
+          <div class="slider-row">
+            <span class="slider-lbl">0.5%</span>
+            <input type="range" id="riskPct" min="0.5" max="5" step="0.1" value="1" oninput="document.getElementById('riskPctLbl').textContent=parseFloat(this.value).toFixed(1)+'%';calc()" />
+            <span class="slider-lbl">5%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Ratio Riesgo/Recompensa (R:R)</label>
+          <div class="rr-grid">
+            <div class="rr-btn" id="rr1" onclick="setRR(1)">1:1</div>
+            <div class="rr-btn rr-active" id="rr2" onclick="setRR(2)">1:2</div>
+            <div class="rr-btn" id="rr3" onclick="setRR(3)">1:3</div>
+            <div class="rr-btn" id="rrC" onclick="setRRCustom()">Custom</div>
+          </div>
+          <div class="custom-rr-wrap" id="customRRWrap">
+            <input type="number" id="customRR" placeholder="ej. 2.5" min="0.1" step="0.1" oninput="calc()" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="result-card">
+        <div class="section-title">Resultados</div>
+        <div class="res-row">
+          <span class="res-label"><span class="dot" style="background:#94A3B8"></span>Entrada</span>
+          <span class="res-val" id="r-entry">&#8212;</span>
+        </div>
+        <div class="res-row">
+          <span class="res-label"><span class="dot" style="background:#EF4444"></span>Stop Loss</span>
+          <span class="res-val" id="r-sl">&#8212;</span>
+        </div>
+        <div class="res-row">
+          <span class="res-label"><span class="dot" style="background:#22C55E"></span>Take Profit</span>
+          <span class="res-val" id="r-tp">&#8212;</span>
+        </div>
+        <div class="res-row">
+          <span class="res-label"><span class="dot" style="background:#F59E0B"></span>En riesgo</span>
+          <span class="res-val" id="r-risk">&#8212;</span>
+        </div>
+        <div class="res-row">
+          <span class="res-label"><span class="dot" style="background:#22C55E"></span>Ganancia pot.</span>
+          <span class="res-val" id="r-profit">&#8212;</span>
+        </div>
+        <div class="res-row" style="border-bottom:none">
+          <span class="res-label"><span class="dot" style="background:#A78BFA"></span>R:R efectivo</span>
+          <span class="res-val" id="r-rr">&#8212;</span>
+        </div>
+        <div class="lot-section-title">Tamaño de posición</div>
+        <div class="lot-grid">
+          <div class="lot-box"><div class="lot-lbl">LOTE STD</div><div class="lot-val" id="r-std">&#8212;</div></div>
+          <div class="lot-box"><div class="lot-lbl">MINI LOTE</div><div class="lot-val" id="r-mini">&#8212;</div></div>
+          <div class="lot-box"><div class="lot-lbl">MICRO LOTE</div><div class="lot-val" id="r-micro">&#8212;</div></div>
+        </div>
+        <div class="summary-box" id="summaryBox"></div>
+        <div class="btn-row">
+          <button class="btn btn-copy" id="btnCopy" onclick="copySummary()">Copiar resumen</button>
+          <button class="btn btn-reset" onclick="resetAll()">Resetear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var direction = 'long';
+var rrMode = 2;
+var customRRMode = false;
+
+function setDir(d) {
+  direction = d;
+  document.getElementById('btn-long').className = 'dir-btn' + (d === 'long' ? ' dir-long' : '');
+  document.getElementById('btn-short').className = 'dir-btn' + (d === 'short' ? ' dir-short' : '');
+  calc();
+}
+
+function setRR(v) {
+  rrMode = v; customRRMode = false;
+  document.getElementById('customRRWrap').style.display = 'none';
+  [1,2,3].forEach(function(n){ document.getElementById('rr'+n).className = 'rr-btn' + (n===v?' rr-active':''); });
+  document.getElementById('rrC').className = 'rr-btn';
+  calc();
+}
+
+function setRRCustom() {
+  customRRMode = true; rrMode = null;
+  [1,2,3].forEach(function(n){ document.getElementById('rr'+n).className = 'rr-btn'; });
+  document.getElementById('rrC').className = 'rr-btn rr-active';
+  document.getElementById('customRRWrap').style.display = 'block';
+  calc();
+}
+
+function getRR() {
+  if (customRRMode) { var v=parseFloat(document.getElementById('customRR').value); return (!isNaN(v)&&v>0)?v:null; }
+  return rrMode;
+}
+
+function getDecimals(type, price) {
+  if (type==='forex') return price<10?5:3;
+  if (type==='crypto') return price>1000?2:4;
+  return 2;
+}
+
+function setVal(id, text, color) {
+  var el = document.getElementById(id);
+  el.textContent = text || '—';
+  el.className = 'res-val' + (text&&color?' '+color:'');
+}
+
+function calc() {
+  var type = document.getElementById('assetType').value;
+  var entry = parseFloat(document.getElementById('entryPrice').value);
+  var atr = parseFloat(document.getElementById('atr').value);
+  var mult = parseFloat(document.getElementById('atrMult').value);
+  var equity = parseFloat(document.getElementById('equity').value);
+  var riskPct = parseFloat(document.getElementById('riskPct').value);
+  var rr = getRR();
+  var sym = document.getElementById('symbol').value || type.toUpperCase();
+
+  var okEntry = !isNaN(entry) && entry > 0;
+  var okATR = !isNaN(atr) && atr > 0;
+  var okEquity = !isNaN(equity) && equity > 0;
+
+  document.getElementById('err-entry').style.display = (!okEntry && document.getElementById('entryPrice').value) ? 'block' : 'none';
+  document.getElementById('err-atr').style.display = (!okATR && document.getElementById('atr').value) ? 'block' : 'none';
+
+  if (!okEntry || !okATR) {
+    ['r-entry','r-sl','r-tp','r-risk','r-profit','r-rr'].forEach(function(id){ setVal(id,null,null); });
+    ['r-std','r-mini','r-micro'].forEach(function(id){ document.getElementById(id).textContent='—'; });
+    document.getElementById('summaryBox').style.display='none';
+    return;
+  }
+
+  var dec = getDecimals(type, entry);
+  var slDist = atr * mult;
+  var sl = direction==='long' ? entry-slDist : entry+slDist;
+  var tp = rr ? (direction==='long' ? entry+slDist*rr : entry-slDist*rr) : null;
+
+  setVal('r-entry', entry.toFixed(dec), 'c-white');
+  setVal('r-sl', sl.toFixed(dec), 'c-red');
+  setVal('r-tp', tp ? tp.toFixed(dec) : null, 'c-green');
+  setVal('r-rr', rr ? '1 : '+rr.toFixed(1) : null, 'c-purple');
+
+  if (okEquity) {
+    var riskAmt = equity * (riskPct/100);
+    var profitAmt = rr ? riskAmt*rr : null;
+    var stdLot = type==='forex' ? riskAmt/((slDist/0.0001)*10) : riskAmt/slDist;
+    setVal('r-risk', '$'+riskAmt.toFixed(2), 'c-amber');
+    setVal('r-profit', profitAmt ? '$'+profitAmt.toFixed(2) : null, 'c-green');
+    document.getElementById('r-std').textContent = stdLot.toFixed(2);
+    document.getElementById('r-mini').textContent = (stdLot*10).toFixed(2);
+    document.getElementById('r-micro').textContent = (stdLot*100).toFixed(2);
+
+    var dir = direction==='long'?'LONG':'SHORT';
+    var summary = sym+' | '+dir+' | Entrada: '+entry.toFixed(dec)+
+      '\nSL: '+sl.toFixed(dec)+' | TP: '+(tp?tp.toFixed(dec):'N/A')+
+      '\nLote: '+stdLot.toFixed(2)+' std | Riesgo: $'+riskAmt.toFixed(2)+
+      (rr?' | R:R 1:'+rr.toFixed(1):'');
+    var box = document.getElementById('summaryBox');
+    box.textContent = summary;
+    box.style.display = 'block';
+  } else {
+    setVal('r-risk',null,null); setVal('r-profit',null,null);
+    ['r-std','r-mini','r-micro'].forEach(function(id){ document.getElementById(id).textContent='—'; });
+    document.getElementById('summaryBox').style.display='none';
+  }
+}
+
+function copySummary() {
+  var text = document.getElementById('summaryBox').textContent;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(function(){
+    var btn = document.getElementById('btnCopy');
+    btn.textContent = 'Copiado!';
+    btn.style.cssText = 'background:#052e16;border-color:#22C55E;color:#22C55E';
+    setTimeout(function(){ btn.textContent='Copiar resumen'; btn.style.cssText=''; }, 2000);
+  });
+}
+
+function resetAll() {
+  ['entryPrice','atr','equity','symbol','customRR'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('atrMult').value=1.5; document.getElementById('atrMultLbl').textContent='1.5x';
+  document.getElementById('riskPct').value=1; document.getElementById('riskPctLbl').textContent='1.0%';
+  document.getElementById('assetType').value='forex';
+  setDir('long'); setRR(2); calc();
+}
+
+setRR(2);
+</script>
+</body>
+</html>
